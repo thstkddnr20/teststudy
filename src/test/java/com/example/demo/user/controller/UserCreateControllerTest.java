@@ -1,6 +1,6 @@
-package com.example.demo.controller;
+package com.example.demo.user.controller;
 
-import com.example.demo.post.domain.PostCreate;
+import com.example.demo.user.domain.UserCreate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
@@ -17,7 +17,7 @@ import org.springframework.test.context.jdbc.SqlGroup;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -25,10 +25,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @SqlGroup({
-        @Sql(value = "/sql/post-create-controller-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
         @Sql(value = "/sql/delete-all-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 })
-class PostCreateControllerTest {
+class UserCreateControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,27 +37,27 @@ class PostCreateControllerTest {
     private JavaMailSender javaMailSender;
 
     @Test
-    void 사용자는_게시글을_작성할_수_있다() throws Exception {
+    void 사용자는_회원_가입을_할_수_있고_회원가입된_사용자는_PENDING_상태이다() throws Exception {
 
         // given
-        PostCreate postCreate = PostCreate.builder()
-                .writerId(3)
-                .content("helloworld")
+        UserCreate userCreate = UserCreate.builder()
+                .email("thstkddnr20@gmail.com")
+                .nickname("tkddnr")
+                .address("gangneung")
                 .build();
         BDDMockito.doNothing().when(javaMailSender).send(any(SimpleMailMessage.class));
 
         // when
 
         // then
-        mockMvc.perform(post("/api/posts")
+        mockMvc.perform(post("/api/users")
+                        .header("EMAIL", "thstkddnr20@naver.com")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(postCreate)))
+                        .content(objectMapper.writeValueAsBytes(userCreate)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.content").value("helloworld"))
-                .andExpect(jsonPath("$.writer.id").value(3))
-                .andExpect(jsonPath("$.writer.nickname").value("son"));
-
+                .andExpect(jsonPath("$.email").value("thstkddnr20@gmail.com"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
 
     }
 
